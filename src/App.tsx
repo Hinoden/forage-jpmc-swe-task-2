@@ -6,8 +6,9 @@ import './App.css';
 /**
  * State declaration for <App />
  */
-interface IState {
+interface IState {    //needs data and showGraph properties to be valid
   data: ServerRespond[],
+  showGraph: boolean,   //false = hidden; true = shown
 }
 
 /**
@@ -22,25 +23,35 @@ class App extends Component<{}, IState> {
       // data saves the server responds.
       // We use this state to parse data down to the child element (Graph) as element property
       data: [],
+      showGraph: false,   //hidden when webpage first loads up
     };
   }
 
   /**
    * Render Graph react component with state.data parse as property data
    */
-  renderGraph() {
-    return (<Graph data={this.state.data}/>)
+  renderGraph() {   //makes sure that the graph doesn't render until the user clicks the "start streaming" button
+    if (this.state.showGraph){
+      return (<Graph data={this.state.data}/>)
+    }
   }
 
   /**
    * Get new data from server and update the state with the new data
    */
   getDataFromServer() {
-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
-      // Update the state by creating a new array of data that consists of
-      // Previous data in the state and the new data from server
-      this.setState({ data: [...this.state.data, ...serverResponds] });
-    });
+    let x = 0;
+    const interval =setInterval(() => {   //setInterval(code, delay)
+      DataStreamer.getData((serverResponds: ServerRespond[]) => {
+        // Update the state by creating a new array of data that consists of
+        // Previous data in the state and the new data from server
+        this.setState({ data: serverResponds, showGraph: true});   //get data and show the graph at the same time
+      });
+      x++;
+      if (x > 1000) {
+        clearInterval(interval);    //when enough data has gone through, clear the interval so there's not an overflow (or too much) data
+      }
+    }, 100);
   }
 
   /**
